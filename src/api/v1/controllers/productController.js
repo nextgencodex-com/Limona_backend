@@ -1,5 +1,5 @@
 const Product = require('../../../models/Product');
-const { logError } = require('../../../utils/logger');
+const { logError, logInfo } = require('../../../utils/logger');
 
 // Get all products
 exports.getAllProducts = async (req, res) => {
@@ -76,10 +76,35 @@ exports.updateProduct = async (req, res) => {
 // Delete product (Admin only)
 exports.deleteProduct = async (req, res) => {
     try {
+        // Get product details before deleting to retrieve image path
+        const product = await Product.getById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({ success: false, error: 'Product not found' });
+        }
+        
+        // Delete the product from database
         const deleted = await Product.delete(req.params.id);
         
         if (!deleted) {
             return res.status(404).json({ success: false, error: 'Product not found' });
+        }
+        
+        // Delete associated image file if it exists
+        if (product.image_url) {
+            try {
+                const path = require('path');
+                const fs = require('fs').promises;
+                const fileName = path.basename(product.image_url);
+                const imagePath = path.join(__dirname, '../../../../../limona/public/images/Products', fileName);
+                
+                // Try to delete the file, but don't fail if it doesn't exist
+                await fs.unlink(imagePath);
+                logInfo(`Product image deleted: ${product.image_url}`);
+            } catch (imgError) {
+                // Log but don't fail the deletion if image removal fails
+                logError('Error deleting product image:', imgError);
+            }
         }
         
         res.json({ success: true, message: 'Product deleted successfully' });

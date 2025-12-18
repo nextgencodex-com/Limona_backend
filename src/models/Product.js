@@ -40,20 +40,22 @@ const Product = {
             description,
             price,
             category,
+            subcategory,
             size,
             color,
             stock,
             image_url,
             images,
             is_active,
-            featured
+            featured,
+            latest_arrival
         } = productData;
         
         const [result] = await pool.query(
-            `INSERT INTO products (name, description, price, category, size, color, stock, image_url, images, is_active, featured)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, description, price, category, size || null, color || null, stock || 0, image_url || null, 
-             images ? JSON.stringify(images) : null, is_active !== undefined ? is_active : true, featured || false]
+            `INSERT INTO products (name, description, price, category, subcategory, size, color, stock, image_url, images, is_active, featured, latest_arrival)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, description, price, category, subcategory || null, size || null, color || null, stock || 0, image_url || null, 
+             images ? JSON.stringify(images) : null, is_active !== undefined ? is_active : true, featured || false, latest_arrival || false]
         );
         
         return { id: result.insertId, ...productData };
