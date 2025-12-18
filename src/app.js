@@ -5,6 +5,7 @@ const cors = require('cors');
 const userRoutes = require('./api/v1/routes/userRoutes');
 const productRoutes = require('./api/v1/routes/productRoutes');
 const adminRoutes = require('./api/v1/routes/adminRoutes');
+const uploadRoutes = require('./api/v1/routes/uploadRoutes');
 const { notFound, errorHandler } = require('./utils/errorHandler');
 const { logInfo } = require('./utils/logger');
 
@@ -26,6 +27,7 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/upload', uploadRoutes);
 
 // Error handlers
 app.use(notFound);
