@@ -68,6 +68,23 @@ class CategoryService {
 		const { name, coming_soon = false, display_order = 0 } = categoryData;
 		
 		try {
+			// Check if an inactive category with the same name exists
+			const [existing] = await pool.query(
+				'SELECT * FROM categories WHERE name = ? AND is_active = false',
+				[name]
+			);
+
+			// If exists, reactivate it instead of creating new
+			if (existing.length > 0) {
+				const [result] = await pool.query(
+					'UPDATE categories SET is_active = true, coming_soon = ?, display_order = ? WHERE id = ?',
+					[coming_soon, display_order, existing[0].id]
+				);
+
+				return this.getCategoryById(existing[0].id);
+			}
+
+			// Otherwise create new
 			const [result] = await pool.query(
 				'INSERT INTO categories (name, coming_soon, display_order) VALUES (?, ?, ?)',
 				[name, coming_soon, display_order]
@@ -153,6 +170,28 @@ class CategoryService {
 		const { category_id, name, coming_soon = false, display_order = 0 } = subcategoryData;
 		
 		try {
+			// Check if an inactive subcategory with the same name exists
+			const [existing] = await pool.query(
+				'SELECT * FROM subcategories WHERE category_id = ? AND name = ? AND is_active = false',
+				[category_id, name]
+			);
+
+			// If exists, reactivate it instead of creating new
+			if (existing.length > 0) {
+				const [result] = await pool.query(
+					'UPDATE subcategories SET is_active = true, coming_soon = ?, display_order = ? WHERE id = ?',
+					[coming_soon, display_order, existing[0].id]
+				);
+
+				const [subcategory] = await pool.query(
+					'SELECT * FROM subcategories WHERE id = ?',
+					[existing[0].id]
+				);
+
+				return subcategory[0];
+			}
+
+			// Otherwise create new
 			const [result] = await pool.query(
 				'INSERT INTO subcategories (category_id, name, coming_soon, display_order) VALUES (?, ?, ?, ?)',
 				[category_id, name, coming_soon, display_order]
