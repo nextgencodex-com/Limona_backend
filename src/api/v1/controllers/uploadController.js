@@ -1,6 +1,9 @@
 const path = require('path');
 const fs = require('fs').promises;
 const { logError, logInfo } = require('../../../utils/logger');
+const { productUploadsDir } = require('../../../utils/upload');
+
+const APP_URL = (process.env.APP_URL || '').replace(/\/$/, '');
 
 // Upload product image
 exports.uploadProductImage = async (req, res) => {
@@ -12,15 +15,17 @@ exports.uploadProductImage = async (req, res) => {
             });
         }
 
-        // The file path relative to public directory
-        const imagePath = `/images/Products/${req.file.filename}`;
-        
-        logInfo(`Image uploaded: ${imagePath}`);
+        // Store path relative to backend so it works with static frontends
+        const relativePath = `/uploads/products/${req.file.filename}`;
+        const publicUrl = APP_URL ? `${APP_URL}${relativePath}` : relativePath;
+
+        logInfo(`Image uploaded: ${relativePath}`);
         
         res.json({
             success: true,
             data: {
-                image_url: imagePath
+                image_url: publicUrl,
+                relative_path: relativePath
             }
         });
     } catch (error) {
@@ -44,14 +49,15 @@ exports.deleteProductImage = async (req, res) => {
             });
         }
 
-        // Convert URL path to file system path
-        const fileName = path.basename(imagePath);
-        const frontendImagePath = path.join(__dirname, '../../../../../limona/public/images/Products', fileName);
+        // Convert URL (or relative path) to file system path
+        const normalizedPath = imagePath.replace(/^https?:\/\/[^/]+/, '');
+        const fileName = path.basename(normalizedPath);
+        const backendImagePath = path.join(productUploadsDir, fileName);
         
         // Check if file exists
         try {
-            await fs.access(frontendImagePath);
-            await fs.unlink(frontendImagePath);
+            await fs.access(backendImagePath);
+            await fs.unlink(backendImagePath);
             logInfo(`Image deleted: ${imagePath}`);
             
             res.json({

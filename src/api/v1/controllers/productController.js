@@ -1,5 +1,6 @@
 const Product = require('../../../models/Product');
 const { logError, logInfo } = require('../../../utils/logger');
+const { productUploadsDir } = require('../../../utils/upload');
 
 // Get all products
 exports.getAllProducts = async (req, res) => {
@@ -39,20 +40,30 @@ exports.getProductById = async (req, res) => {
 exports.createProduct = async (req, res) => {
     try {
         const productData = req.body;
-        
+        // Basic normalization
+        if (productData.price !== undefined) {
+            productData.price = Number(productData.price);
+        }
+        if (productData.stock !== undefined) {
+            productData.stock = Number(productData.stock);
+        }
+
         // Validation
-        if (!productData.name || !productData.price || !productData.category) {
+        if (!productData.name || productData.price === undefined || !productData.category) {
             return res.status(400).json({ 
                 success: false, 
                 error: 'Name, price, and category are required' 
             });
         }
-        
+
+        logInfo('Creating product', { byAdminId: req.admin?.id, name: productData.name, category: productData.category, price: productData.price });
         const product = await Product.create(productData);
+        logInfo('Product created', { id: product.id });
         res.status(201).json({ success: true, data: product });
     } catch (error) {
-        logError('Error creating product:', error);
-        res.status(500).json({ success: false, error: 'Failed to create product' });
+        const errMsg = error?.sqlMessage || error?.message || 'Failed to create product';
+        logError('Error creating product:', errMsg);
+        res.status(500).json({ success: false, error: errMsg });
     }
 };
 
@@ -95,9 +106,10 @@ exports.deleteProduct = async (req, res) => {
             try {
                 const path = require('path');
                 const fs = require('fs').promises;
-                const fileName = path.basename(product.image_url);
-                const imagePath = path.join(__dirname, '../../../../../limona/public/images/Products', fileName);
-                
+                const normalizedPath = product.image_url.replace(/^https?:\/\/[^/]+/, '');
+                const fileName = path.basename(normalizedPath);
+                const imagePath = path.join(productUploadsDir, fileName);
+
                 // Try to delete the file, but don't fail if it doesn't exist
                 await fs.unlink(imagePath);
                 logInfo(`Product image deleted: ${product.image_url}`);

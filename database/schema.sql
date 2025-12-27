@@ -2,8 +2,8 @@
 -- Run this file in phpMyAdmin or MySQL command line
 
 -- Create database if not exists
-CREATE DATABASE IF NOT EXISTS limona;
-USE limona;
+CREATE DATABASE IF NOT EXISTS sriltfwe_limona;
+USE sriltfwe_limona;
 
 -- Admin users table for authentication
 CREATE TABLE IF NOT EXISTS admins (
@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT,
     price DECIMAL(10, 2) NOT NULL,
     category VARCHAR(100) NOT NULL,
+    subcategory VARCHAR(100),
     size VARCHAR(50),
     color VARCHAR(50),
     stock INT DEFAULT 0,
@@ -32,9 +33,11 @@ CREATE TABLE IF NOT EXISTS products (
     images JSON,
     is_active BOOLEAN DEFAULT TRUE,
     featured BOOLEAN DEFAULT FALSE,
+    latest_arrival BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_category (category),
+    INDEX idx_subcategory (subcategory),
     INDEX idx_is_active (is_active),
     INDEX idx_featured (featured)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
