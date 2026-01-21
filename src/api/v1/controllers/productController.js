@@ -90,18 +90,31 @@ exports.deleteProduct = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Product not found' });
         }
         
-        // Delete associated image file if it exists
-        if (product.image_url) {
+        // Delete associated image files if they exist
+        const imagesToDelete = [
+            product.image_url,
+            product.image_url_2,
+            product.image_url_3,
+            product.size_chart_url
+        ].filter(Boolean); // Remove null/undefined values
+        
+        if (imagesToDelete.length > 0) {
             try {
                 const path = require('path');
                 const fs = require('fs').promises;
-                const fileName = path.basename(product.image_url);
-                const imagePath = path.join(__dirname, '../../../../../limona/public/images/Products', fileName);
                 
-                // Try to delete the file, but don't fail if it doesn't exist
-                await fs.unlink(imagePath);
-                logInfo(`Product image deleted: ${product.image_url}`);
-            } catch (imgError) {
+                for (const imageUrl of imagesToDelete) {
+                    try {
+                        const fileName = path.basename(imageUrl);
+                        const imagePath = path.join(__dirname, '../../../../../limona/public/images/Products', fileName);
+                        await fs.unlink(imagePath);
+                        logInfo(`Product image deleted: ${imageUrl}`);
+                    } catch (imgError) {
+                        // Continue deleting other images even if one fails
+                        logError(`Failed to delete image ${imageUrl}:`, imgError);
+                    }
+                }
+            } catch (error) {
                 // Log but don't fail the deletion if image removal fails
                 logError('Error deleting product image:', imgError);
             }
