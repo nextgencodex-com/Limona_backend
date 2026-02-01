@@ -3,20 +3,20 @@ const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
 
+// Shared upload locations (kept inside the backend so the frontend can stay static)
+const uploadsRoot = path.resolve(__dirname, '../../uploads');
+const productUploadsDir = path.join(uploadsRoot, 'products');
+
 // Configure multer storage for product images
 const productStorage = multer.diskStorage({
   destination: async function (req, file, cb) {
-    // Save directly to frontend's public/images/Products folder
-    const uploadDir = path.resolve(__dirname, '../../../limona/public/images/Products');
-    
-    // Create directory if it doesn't exist
+    // Save to backend uploads/products
     try {
-      await fs.promises.mkdir(uploadDir, { recursive: true });
+      await fs.promises.mkdir(productUploadsDir, { recursive: true });
     } catch (error) {
       console.error('Error creating upload directory:', error);
     }
-    
-    cb(null, uploadDir);
+    cb(null, productUploadsDir);
   },
   filename: function (req, file, cb) {
     // Generate unique filename
@@ -52,7 +52,7 @@ const uploadProductImage = multer({
 async function saveImage(buffer, originalName = 'image') {
   if (!buffer) throw new Error('No file buffer provided');
 
-  const uploadsDir = path.resolve(__dirname, '../../uploads');
+  const uploadsDir = uploadsRoot;
   await fs.promises.mkdir(uploadsDir, { recursive: true });
 
   const ext = path.extname(originalName) || '.bin';
@@ -68,5 +68,6 @@ async function saveImage(buffer, originalName = 'image') {
 
 module.exports = {
   saveImage,
-  uploadProductImage
+  uploadProductImage,
+  productUploadsDir
 };
