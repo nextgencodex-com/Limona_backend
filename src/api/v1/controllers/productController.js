@@ -101,8 +101,15 @@ exports.deleteProduct = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Product not found' });
         }
         
-        // Delete associated image file if it exists
-        if (product.image_url) {
+        // Delete associated image files if they exist
+        const imagesToDelete = [
+            product.image_url,
+            product.image_url_2,
+            product.image_url_3,
+            product.size_chart_url
+        ].filter(Boolean); // Remove null/undefined values
+        
+        if (imagesToDelete.length > 0) {
             try {
                 const path = require('path');
                 const fs = require('fs').promises;
