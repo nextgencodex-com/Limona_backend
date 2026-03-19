@@ -39,24 +39,27 @@ exports.getProductById = async (req, res) => {
 // Create new product (Admin only)
 exports.createProduct = async (req, res) => {
     try {
-        const productData = req.body;
-        // Basic normalization
-        if (productData.price !== undefined) {
-            productData.price = Number(productData.price);
-        }
+        const productData = { ...req.body };
+
+        const smlPrice = productData.price_sml ?? productData.price;
+        const xl2xlPrice = productData.price_xl_2xl ?? smlPrice;
+
         if (productData.stock !== undefined) {
             productData.stock = Number(productData.stock);
         }
-
+        
         // Validation
-        if (!productData.name || productData.price === undefined || !productData.category) {
+        if (!productData.name || smlPrice === undefined || smlPrice === null || !productData.category) {
             return res.status(400).json({ 
                 success: false, 
-                error: 'Name, price, and category are required' 
+                error: 'Name, S/M/L price, and category are required' 
             });
         }
 
-        logInfo('Creating product', { byAdminId: req.admin?.id, name: productData.name, category: productData.category, price: productData.price });
+        productData.price = Number(smlPrice);
+        productData.price_sml = Number(smlPrice);
+        productData.price_xl_2xl = Number(xl2xlPrice);
+        
         const product = await Product.create(productData);
         logInfo('Product created', { id: product.id });
         res.status(201).json({ success: true, data: product });
@@ -70,7 +73,24 @@ exports.createProduct = async (req, res) => {
 // Update product (Admin only)
 exports.updateProduct = async (req, res) => {
     try {
-        const productData = req.body;
+        const productData = { ...req.body };
+
+        if (productData.price_sml !== undefined) {
+            const smlPrice = Number(productData.price_sml);
+            productData.price = smlPrice;
+            productData.price_sml = smlPrice;
+
+            if (productData.price_xl_2xl === undefined || productData.price_xl_2xl === null) {
+                productData.price_xl_2xl = smlPrice;
+            } else {
+                productData.price_xl_2xl = Number(productData.price_xl_2xl);
+            }
+        } else if (productData.price_xl_2xl !== undefined && productData.price_xl_2xl !== null) {
+            productData.price_xl_2xl = Number(productData.price_xl_2xl);
+        } else if (productData.price !== undefined && (productData.price_sml !== undefined || productData.price_xl_2xl !== undefined)) {
+            productData.price = Number(productData.price);
+        }
+
         const product = await Product.update(req.params.id, productData);
         
         if (!product) {

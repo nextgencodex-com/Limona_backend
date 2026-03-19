@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS products (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     price DECIMAL(10, 2) NOT NULL,
+    price_sml DECIMAL(10, 2) NOT NULL,
+    price_xl_2xl DECIMAL(10, 2) NOT NULL,
     category VARCHAR(100) NOT NULL,
     subcategory VARCHAR(100),
     size VARCHAR(50),
@@ -80,10 +82,10 @@ VALUES ('admin', 'admin@limona.com', '$2b$10$YourBcryptHashHere', 'super_admin')
 ON DUPLICATE KEY UPDATE username=username;
 
 -- Insert sample products
-INSERT INTO products (name, description, price, category, size, color, stock, image_url, featured) VALUES
-('Classic White T-Shirt', 'Premium cotton t-shirt with comfortable fit', 29.99, 'T-Shirts', 'M', 'White', 50, '/images/T-Shirts/white-tshirt.jpg', TRUE),
-('Vintage Denim Jacket', 'Authentic vintage style denim jacket', 89.99, 'Vintage-Jacket', 'L', 'Blue', 30, '/images/Vintage-Jacket/denim.jpg', TRUE),
-('Oversized Hoodie', 'Cozy oversized hoodie perfect for casual wear', 49.99, 'Hoodies', 'XL', 'Black', 40, '/images/Hoodies/black-hoodie.jpg', TRUE),
-('Summer Floral Frock', 'Beautiful floral pattern summer dress', 59.99, 'Frock', 'M', 'Floral', 25, '/images/Frock/floral-frock.jpg', FALSE),
-('Casual Shorts', 'Comfortable cotton shorts for summer', 34.99, 'Shorts', 'L', 'Khaki', 35, '/images/Shorts/khaki-shorts.jpg', FALSE)
+INSERT INTO products (name, description, price, price_sml, price_xl_2xl, category, size, color, stock, image_url, featured) VALUES
+('Classic White T-Shirt', 'Premium cotton t-shirt with comfortable fit', 29.99, 29.99, 34.99, 'T-Shirts', 'M', 'White', 50, '/images/T-Shirts/white-tshirt.jpg', TRUE),
+('Vintage Denim Jacket', 'Authentic vintage style denim jacket', 89.99, 89.99, 99.99, 'Vintage-Jacket', 'L', 'Blue', 30, '/images/Vintage-Jacket/denim.jpg', TRUE),
+('Oversized Hoodie', 'Cozy oversized hoodie perfect for casual wear', 49.99, 49.99, 54.99, 'Hoodies', 'XL', 'Black', 40, '/images/Hoodies/black-hoodie.jpg', TRUE),
+('Summer Floral Frock', 'Beautiful floral pattern summer dress', 59.99, 59.99, 64.99, 'Frock', 'M', 'Floral', 25, '/images/Frock/floral-frock.jpg', FALSE),
+('Casual Shorts', 'Comfortable cotton shorts for summer', 34.99, 34.99, 39.99, 'Shorts', 'L', 'Khaki', 35, '/images/Shorts/khaki-shorts.jpg', FALSE)
 ON DUPLICATE KEY UPDATE name=name;

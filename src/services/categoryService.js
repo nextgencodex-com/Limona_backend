@@ -3,12 +3,22 @@ const { logError } = require('../utils/logger');
 
 class CategoryService {
 	// Get all categories with their subcategories
-	async getAllCategories() {
+	async getAllCategories(options = {}) {
+		const {
+			includeInactive = false,
+			includeInactiveSubcategories = includeInactive
+		} = options;
+
 		try {
+			const categoryWhereClause = includeInactive ? '' : 'WHERE c.is_active = true';
+			const subcategoryWhereClause = includeInactiveSubcategories
+				? 'WHERE category_id = ?'
+				: 'WHERE category_id = ? AND is_active = true';
+
 			const [categories] = await pool.query(`
 				SELECT c.*
 				FROM categories c
-				WHERE c.is_active = true
+				${categoryWhereClause}
 				ORDER BY c.display_order, c.name
 			`);
 
@@ -17,7 +27,7 @@ class CategoryService {
 				const [subcategories] = await pool.query(`
 					SELECT id, name, coming_soon, display_order, is_active
 					FROM subcategories
-					WHERE category_id = ? AND is_active = true
+					${subcategoryWhereClause}
 					ORDER BY display_order, name
 				`, [category.id]);
 
@@ -32,12 +42,22 @@ class CategoryService {
 	}
 
 	// Get single category by ID
-	async getCategoryById(id) {
+	async getCategoryById(id, options = {}) {
+		const {
+			includeInactive = false,
+			includeInactiveSubcategories = includeInactive
+		} = options;
+
 		try {
+			const categoryActiveClause = includeInactive ? '' : 'AND c.is_active = true';
+			const subcategoryWhereClause = includeInactiveSubcategories
+				? 'WHERE category_id = ?'
+				: 'WHERE category_id = ? AND is_active = true';
+
 			const [categories] = await pool.query(`
 				SELECT c.*
 				FROM categories c
-				WHERE c.id = ? AND c.is_active = true
+				WHERE c.id = ? ${categoryActiveClause}
 			`, [id]);
 
 			if (categories.length === 0) {
@@ -50,7 +70,7 @@ class CategoryService {
 			const [subcategories] = await pool.query(`
 				SELECT id, name, coming_soon, display_order, is_active
 				FROM subcategories
-				WHERE category_id = ? AND is_active = true
+				${subcategoryWhereClause}
 				ORDER BY display_order, name
 			`, [id]);
 
@@ -140,7 +160,7 @@ class CategoryService {
 				return null;
 			}
 
-			return this.getCategoryById(id);
+			return this.getCategoryById(id, { includeInactive: true, includeInactiveSubcategories: true });
 		} catch (error) {
 			if (error.code === 'ER_DUP_ENTRY') {
 				throw new Error('Category with this name already exists');
@@ -150,11 +170,11 @@ class CategoryService {
 		}
 	}
 
-	// Delete category (soft delete)
+	// Delete category (permanent delete)
 	async deleteCategory(id) {
 		try {
 			const [result] = await pool.query(
-				'UPDATE categories SET is_active = false WHERE id = ?',
+				'DELETE FROM categories WHERE id = ?',
 				[id]
 			);
 
@@ -267,11 +287,11 @@ class CategoryService {
 		}
 	}
 
-	// Delete subcategory (soft delete)
+	// Delete subcategory (permanent delete)
 	async deleteSubcategory(id) {
 		try {
 			const [result] = await pool.query(
-				'UPDATE subcategories SET is_active = false WHERE id = ?',
+				'DELETE FROM subcategories WHERE id = ?',
 				[id]
 			);
 

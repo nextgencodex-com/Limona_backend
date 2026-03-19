@@ -4,7 +4,11 @@ const { logError } = require('../../../utils/logger');
 // Get all categories
 const getCategories = async (req, res) => {
 	try {
-		const categories = await categoryService.getAllCategories();
+		const includeInactive = req.query.include_inactive === 'true' || req.query.includeInactive === 'true';
+		const categories = await categoryService.getAllCategories({
+			includeInactive,
+			includeInactiveSubcategories: includeInactive
+		});
 		res.json(categories);
 	} catch (error) {
 		logError(error);
