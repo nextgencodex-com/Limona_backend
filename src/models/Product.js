@@ -39,6 +39,8 @@ const Product = {
             name,
             description,
             price,
+            price_sml,
+            price_xl_2xl,
             category,
             subcategory,
             size,
@@ -53,11 +55,14 @@ const Product = {
             featured,
             latest_arrival
         } = productData;
+
+        const smlPrice = price_sml ?? price;
+        const xl2xlPrice = price_xl_2xl ?? smlPrice;
         
         const [result] = await pool.query(
-            `INSERT INTO products (name, description, price, category, subcategory, size, color, stock, image_url, image_url_2, image_url_3, size_chart_url, images, is_active, featured, latest_arrival)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, description, price, category, subcategory || null, size || null, color || null, stock || 0, 
+            `INSERT INTO products (name, description, price, price_sml, price_xl_2xl, category, subcategory, size, color, stock, image_url, image_url_2, image_url_3, size_chart_url, images, is_active, featured, latest_arrival)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, description, smlPrice, smlPrice, xl2xlPrice, category, subcategory || null, size || null, color || null, stock || 0, 
              image_url || null, image_url_2 || null, image_url_3 || null, size_chart_url || null,
              images ? JSON.stringify(images) : null, is_active !== undefined ? is_active : true, featured || false, latest_arrival || false]
         );
