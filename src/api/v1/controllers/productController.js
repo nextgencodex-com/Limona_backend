@@ -73,7 +73,15 @@ exports.createProduct = async (req, res) => {
 // Update product (Admin only)
 exports.updateProduct = async (req, res) => {
     try {
+        const { id } = req.params;
+        if (!id || isNaN(Number(id))) {
+            return res.status(400).json({ success: false, error: 'Invalid product ID' });
+        }
+
         const productData = { ...req.body };
+        
+        // Log request data for debugging
+        logInfo(`Updating product ${id}`, { fields: Object.keys(productData) });
 
         if (productData.price_sml !== undefined) {
             const smlPrice = Number(productData.price_sml);
@@ -87,11 +95,9 @@ exports.updateProduct = async (req, res) => {
             }
         } else if (productData.price_xl_2xl !== undefined && productData.price_xl_2xl !== null) {
             productData.price_xl_2xl = Number(productData.price_xl_2xl);
-        } else if (productData.price !== undefined && (productData.price_sml !== undefined || productData.price_xl_2xl !== undefined)) {
-            productData.price = Number(productData.price);
         }
 
-        const product = await Product.update(req.params.id, productData);
+        const product = await Product.update(id, productData);
         
         if (!product) {
             return res.status(404).json({ success: false, error: 'Product not found' });
@@ -99,8 +105,10 @@ exports.updateProduct = async (req, res) => {
         
         res.json({ success: true, data: product });
     } catch (error) {
-        logError('Error updating product:', error);
-        res.status(500).json({ success: false, error: 'Failed to update product' });
+        const errMsg = error.message || 'Failed to update product';
+        const statusCode = error.status || 500;
+        logError(`Error updating product ${req.params.id}:`, errMsg);
+        res.status(statusCode).json({ success: false, error: errMsg });
     }
 };
 
