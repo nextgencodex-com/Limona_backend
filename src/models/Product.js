@@ -72,28 +72,59 @@ const Product = {
     
     // Update product
     update: async (id, productData) => {
+        const allowedFields = [
+            'name', 'description', 'price', 'price_sml', 'price_xl_2xl', 
+            'category', 'subcategory', 'size', 'color', 'stock', 
+            'image_url', 'image_url_2', 'image_url_3', 'size_chart_url', 
+            'images', 'is_active', 'featured', 'latest_arrival'
+        ];
+
         const fields = [];
         const values = [];
         
         Object.keys(productData).forEach(key => {
-            if (key === 'images' && productData[key]) {
-                fields.push(`${key} = ?`);
-                values.push(JSON.stringify(productData[key]));
-            } else if (productData[key] !== undefined) {
-                fields.push(`${key} = ?`);
-                values.push(productData[key]);
+            if (allowedFields.includes(key)) {
+                if (key === 'images' && productData[key]) {
+                    fields.push(`${key} = ?`);
+                    // Only stringify if it's not already a string
+                    const imagesValue = typeof productData[key] === 'string' 
+                        ? productData[key] 
+                        : JSON.stringify(productData[key]);
+                    values.push(imagesValue);
+                } else if (productData[key] !== undefined) {
+                    fields.push(`${key} = ?`);
+                    values.push(productData[key]);
+                }
             }
         });
         
         if (fields.length === 0) {
-            throw new Error('No fields to update');
+            throw new Error('No valid fields to update');
         }
         
         values.push(id);
         const query = `UPDATE products SET ${fields.join(', ')} WHERE id = ?`;
         
-        await pool.query(query, values);
-        return Product.getById(id);
+        try {
+            // Log for debugging (ensure sensitive data is handled in real production)
+            console.log('Executing Update Query:', query);
+            console.log('Update Values:', values);
+            
+            const [result] = await pool.query(query, values);
+            
+            if (result.affectedRows === 0) {
+                console.warn(`No product found with id ${id} to update`);
+                return null;
+            }
+            
+            return Product.getById(id);
+        } catch (error) {
+            console.error('Database update error:', error);
+            // Re-throw with more context
+            const dbError = new Error(error.sqlMessage || error.message || 'Database update failed');
+            dbError.status = 500;
+            throw dbError;
+        }
     },
     
     // Delete product
